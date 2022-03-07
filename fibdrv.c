@@ -18,11 +18,13 @@ MODULE_VERSION("0.1");
 /* MAX_LENGTH is set to 92 because
  * ssize_t can't fit the number > 92
  */
-#define MAX_LENGTH 92
+#define MAX_LENGTH 186
 
 /* MAX_BUF_SIZE is set to 500 because fib(500) with 106 digits
  */
 #define MAX_BUF_SIZE 106
+
+typedef unsigned __int128 u128_t;
 
 static dev_t fib_dev = 0;
 static struct cdev *fib_cdev;
@@ -43,7 +45,7 @@ static inline char *strrev(char *str)
     return str;
 }
 
-static char *to_string(long long n)
+static char *to_string(u128_t n)
 {
     char *ret = kmalloc(MAX_BUF_SIZE, GFP_USER), *ret_ptr = ret;
 
@@ -57,7 +59,7 @@ static char *to_string(long long n)
 
 static char *fib_sequence(long long k)
 {
-    long long *f = kmalloc(sizeof(long long) * (k + 2), GFP_USER);
+    u128_t *f = kmalloc(sizeof(u128_t) * (k + 2), GFP_USER);
 
     f[0] = 0;
     f[1] = 1;
@@ -66,7 +68,7 @@ static char *fib_sequence(long long k)
         f[i] = f[i - 1] + f[i - 2];
     }
 
-    long long ret = f[k];
+    u128_t ret = f[k];
     kfree(f);
 
     return to_string(ret);
