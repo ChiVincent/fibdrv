@@ -20,6 +20,10 @@ MODULE_VERSION("0.1");
  */
 #define MAX_LENGTH 92
 
+/* MAX_BUF_SIZE is set to 500 because fib(500) with 106 digits
+ */
+#define MAX_BUF_SIZE 106
+
 static dev_t fib_dev = 0;
 static struct cdev *fib_cdev;
 static struct class *fib_class;
@@ -63,6 +67,10 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
+    copy_to_user(buf,
+                 "1394232245616978801397243828704072839500702565876973072641089"
+                 "62948325571622863290691557658876222521294125",
+                 105);
     return (ssize_t) fib_sequence(*offset);
 }
 
