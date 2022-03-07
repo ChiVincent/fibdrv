@@ -29,7 +29,33 @@ static struct cdev *fib_cdev;
 static struct class *fib_class;
 static DEFINE_MUTEX(fib_mutex);
 
-static long long fib_sequence(long long k)
+static inline char *strrev(char *str)
+{
+    char *p1, *p2;
+
+    if (!str || !*str)
+        return str;
+    for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2) {
+        *p1 ^= *p2;
+        *p2 ^= *p1;
+        *p1 ^= *p2;
+    }
+    return str;
+}
+
+static char *to_string(long long n)
+{
+    char *ret = kmalloc(MAX_BUF_SIZE, GFP_USER), *ret_ptr = ret;
+
+    do {
+        *(ret_ptr++) = n % 10 + '0';
+        n /= 10;
+    } while (n);
+
+    return strrev(ret);
+}
+
+static char *fib_sequence(long long k)
 {
     long long *f = kmalloc(sizeof(long long) * (k + 2), GFP_USER);
 
@@ -43,7 +69,7 @@ static long long fib_sequence(long long k)
     long long ret = f[k];
     kfree(f);
 
-    return ret;
+    return to_string(ret);
 }
 
 static int fib_open(struct inode *inode, struct file *file)
@@ -67,11 +93,18 @@ static ssize_t fib_read(struct file *file,
                         size_t size,
                         loff_t *offset)
 {
-    copy_to_user(buf,
-                 "1394232245616978801397243828704072839500702565876973072641089"
-                 "62948325571622863290691557658876222521294125",
-                 105);
-    return (ssize_t) fib_sequence(*offset);
+    ssize_t bytes_read = 0;
+    char *msg = fib_sequence(*offset), *msg_ptr = msg;
+
+    while (size && *msg_ptr) {
+        put_user(*(msg_ptr++), buf++);
+        bytes_read++;
+        size--;
+    }
+    put_user('\0', buf);
+
+    kfree(msg);
+    return bytes_read;
 }
 
 /* write operation is skipped */
