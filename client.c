@@ -25,7 +25,7 @@ int main()
     char write_buf[] = "testing writing";
     int offset = 200; /* TODO: try test something bigger than the limit */
 
-    FILE *perf_log = fopen("userspace.log", "w");
+    FILE *perf_log = fopen("data.log", "w");
     if (!perf_log) {
         perror("Failed to open userspace.log");
         exit(1);
