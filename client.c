@@ -7,7 +7,26 @@
 #include <unistd.h>
 
 #define FIB_DEV "/dev/fibonacci"
+#define LOGGER "/sys/kernel/fib_logger/kt_ns"
 #define MAX_BUF_SIZE 106  // fib(500)
+
+static u_int64_t get_ktime()
+{
+    int logger = open(LOGGER, O_RDONLY);
+    if (!logger)
+        return -1;
+
+    char buf[32];
+    int len = pread(logger, buf, 31, 0);
+    close(logger);
+
+    if (len <= 0)
+        return -2;
+
+    buf[len - 1] = '\0';
+
+    return atol(buf);
+}
 
 static inline u_int64_t get_nanotime()
 {
@@ -47,11 +66,12 @@ int main()
         u_int64_t start = get_nanotime();
         sz = read(fd, buf, MAX_BUF_SIZE);
         u_int64_t user = get_nanotime() - start;
+        u_int64_t kernel = get_ktime();
         printf("Reading from " FIB_DEV
                " at offset %d, returned the sequence "
                "%s.\n",
                i, buf);
-        fprintf(perf_log, "%d %lld\n", i, user);
+        fprintf(perf_log, "%d %lld %lld\n", i, user, kernel);
     }
 
     for (int i = offset; i >= 0; i--) {

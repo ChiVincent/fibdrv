@@ -38,7 +38,7 @@ if __name__ == "__main__":
     ax.set_ylabel('time (ns)', fontsize = 16)
 
     ax.plot(X, Y[0], marker = '*', markersize = 3, label = 'user')
-    # ax.plot(X, Y[1], marker = '+', markersize = 7, label = 'kernel')
+    ax.plot(X, Y[1], marker = '+', markersize = 7, label = 'kernel')
     # ax.plot(X, Y[2], marker = '^', markersize = 3, label = 'kernel to user')
     ax.legend(loc = 'upper left')
 
