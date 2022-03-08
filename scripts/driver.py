@@ -26,7 +26,7 @@ def data_processing(data_set, n):
 if __name__ == "__main__":
     Ys = []
     for i in range(runs):
-        comp_proc = subprocess.run('sudo ./client > /dev/null', shell = True)
+        comp_proc = subprocess.run('sudo taskset -c 3 ./client > /dev/null', shell = True)
         output = np.loadtxt('data.log', dtype = 'float').T
         Ys.append(np.delete(output, 0, 0))
     X = output[0]

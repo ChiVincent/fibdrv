@@ -43,6 +43,7 @@ check: all
 plot: all
 	$(MAKE) unload
 	$(MAKE) load
+	@scripts/prepare_measurement.sh
 	@scripts/driver.py
 	$(MAKE) unload
 	@rm -f data.log
