@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/slab.h>
+#include <linux/sysfs.h>
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("National Cheng Kung University, Taiwan");
@@ -30,6 +31,8 @@ static dev_t fib_dev = 0;
 static struct cdev *fib_cdev;
 static struct class *fib_class;
 static DEFINE_MUTEX(fib_mutex);
+
+static struct kobject *logger;
 
 static inline char *strrev(char *str)
 {
@@ -195,7 +198,16 @@ static int __init init_fib_dev(void)
         rc = -4;
         goto failed_device_create;
     }
+
+    logger = kobject_create_and_add("fib_logger", kernel_kobj);
+    if (!logger) {
+        printk(KERN_ALERT "Failed to create logger");
+        rc = -ENOMEM;
+        goto failed_logger_create;
+    }
+
     return rc;
+failed_logger_create:
 failed_device_create:
     class_destroy(fib_class);
 failed_class_create:
@@ -212,6 +224,7 @@ static void __exit exit_fib_dev(void)
     class_destroy(fib_class);
     cdev_del(fib_cdev);
     unregister_chrdev_region(fib_dev, 1);
+    kobject_put(logger);
 }
 
 module_init(init_fib_dev);
