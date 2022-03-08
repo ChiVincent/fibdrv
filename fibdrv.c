@@ -32,7 +32,35 @@ static struct cdev *fib_cdev;
 static struct class *fib_class;
 static DEFINE_MUTEX(fib_mutex);
 
+static ktime_t kt;
+static u_int64_t kt_ns;
+
 static struct kobject *logger;
+
+static ssize_t kt_show(struct kobject *kobj,
+                       struct kobj_attribute *attr,
+                       char *buf)
+{
+    kt_ns = ktime_to_ns(kt);
+    return snprintf(buf, 16, "%lld", kt_ns);
+}
+
+static ssize_t kt_store(struct kobject *kobj,
+                        struct kobj_attribute *attr,
+                        const char *buf,
+                        size_t count)
+{
+    return 0;  // do nothing
+}
+
+static struct kobj_attribute profiler = __ATTR(kt_ns, 0664, kt_show, kt_store);
+static struct attribute *attrs[] = {
+    &profiler.attr,
+    NULL,  // need to NULL terminate the list of attributes
+};
+static struct attribute_group attr_group = {
+    .attrs = attrs,
+};
 
 static inline char *strrev(char *str)
 {
@@ -99,7 +127,9 @@ static ssize_t fib_read(struct file *file,
                         loff_t *offset)
 {
     ssize_t bytes_read = 0;
+    kt = ktime_get();
     char *msg = fib_sequence(*offset), *msg_ptr = msg;
+    kt = ktime_sub(ktime_get(), kt);
 
     while (size && *msg_ptr) {
         put_user(*(msg_ptr++), buf++);
@@ -206,7 +236,14 @@ static int __init init_fib_dev(void)
         goto failed_logger_create;
     }
 
+    if ((rc = sysfs_create_group(logger, &attr_group))) {
+        printk(KERN_ALERT "Failed to create sysfs");
+        goto failed_create_sysfs;
+    }
+
     return rc;
+failed_create_sysfs:
+    kobject_put(logger);
 failed_logger_create:
 failed_device_create:
     class_destroy(fib_class);
